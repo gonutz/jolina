@@ -25,6 +25,7 @@ const (
 	minBallShootSpeed  = 30
 	maxBallShootSpeed  = 50
 	ballFriction       = 3
+	goalScorePath      = "rsc/score.wav"
 )
 
 var (
@@ -182,6 +183,12 @@ func main() {
 					vx += kiwiSpeed
 				}
 				left.x += vx
+				if left.x < -kiwiW/2 {
+					left.x = -kiwiW / 2
+				}
+				if left.x > windowW-kiwiW/4 {
+					left.x = windowW - kiwiW/4
+				}
 			}
 			// move right player
 			if right.shootCooldown == 0 {
@@ -193,6 +200,12 @@ func main() {
 					vx += kiwiSpeed
 				}
 				right.x += vx
+				if right.x < -3*kiwiW/4 {
+					right.x = -3 * kiwiW / 4
+				}
+				if right.x > windowW-kiwiW/2 {
+					right.x = windowW - kiwiW/2
+				}
 			}
 			// move ball
 			ballX += ballVx
@@ -216,6 +229,7 @@ func main() {
 					right.score++
 				}
 				scoringTimer = 60
+				window.PlaySoundFile(goalScorePath)
 			}
 		}
 
