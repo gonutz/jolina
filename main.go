@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	windowW, windowH   = 1800, 500
+	windowW, windowH   = 1890, 500
 	kiwiW, kiwiH       = 343, 300
 	ballW, ballH       = 60, 60
 	leftKiwiPath       = "rsc/blue.png"
@@ -25,11 +25,16 @@ const (
 	minBallShootSpeed  = 30
 	maxBallShootSpeed  = 50
 	ballFriction       = 3
-	goalScorePath      = "rsc/score.wav"
+	leftGoalSoundPath  = "rsc/white_goal.wav"
+	rightGoalSoundPath = "rsc/blue_goal.wav"
+	leftWinSoundPath   = "rsc/blue_win.wav"
+	rightWinSoundPath  = "rsc/white_win.wav"
+	winScore           = 1 //0
+	winSoundCooldown   = 40
 )
 
 var (
-	leftKiwiShootX      = [2]int{90, 140}
+	leftKiwiShootX      = [2]int{90, 143}
 	rightKiwiShootX     = [2]int{160, 220}
 	ballHitBoxX         = [2]int{5, 50}
 	leftShootSoundPaths = []string{
@@ -56,6 +61,8 @@ func main() {
 	ballVx := 0
 	right.x = windowW - kiwiW
 	scoringTimer := 0
+	var leftWon, rightWon bool
+	winSoundTimer := 0
 	check(draw.RunWindow("Jolina Kiwi Fußball", windowW, windowH, func(window draw.Window) {
 		if !dinputInited {
 			initDInput()
@@ -70,6 +77,7 @@ func main() {
 			scoringTimer--
 			if scoringTimer == 0 {
 				left.shootFrames = 0
+				winSoundTimer = 0
 				left.shootCooldown = 0
 				left.x = 0
 				right.shootFrames = 0
@@ -77,7 +85,17 @@ func main() {
 				right.x = windowW - kiwiW
 				ballX = (windowW - ballW) / 2
 				ballVx = 0
+				if left.score >= winScore {
+					leftWon = true
+					winSoundTimer = winSoundCooldown
+				}
+				if right.score >= winScore {
+					rightWon = true
+					winSoundTimer = winSoundCooldown
+				}
 			}
+		} else if leftWon || rightWon {
+			// do nothing here, the rendering changes in this case
 		} else {
 			// shoot
 			left.shootFrames--
@@ -225,34 +243,54 @@ func main() {
 			if leftGoal || rightGoal {
 				if leftGoal {
 					left.score++
+					window.PlaySoundFile(leftGoalSoundPath)
 				} else {
 					right.score++
+					window.PlaySoundFile(rightGoalSoundPath)
 				}
 				scoringTimer = 60
-				window.PlaySoundFile(goalScorePath)
 			}
 		}
 
 		// draw everything
 		window.FillRect(0, 0, windowW, windowH, draw.LightGreen)
-		// draw left kiwi
-		leftPath := leftKiwiPath
-		if left.shootFrames > 0 {
-			leftPath = leftKiwiShootPath
-		}
-		window.DrawImageFile(leftPath, left.x, windowH-kiwiH)
-		// draw ball
-		window.DrawImageFile(ballPath, ballX, windowH-ballH)
-		// draw right kiwi
-		rightPath := rightKiwiPath
-		if right.shootFrames > 0 {
-			rightPath = rightKiwiShootPath
-		}
-		window.DrawImageFile(rightPath, right.x, windowH-kiwiH)
 		const scoreScale = 3
 		score := fmt.Sprintf("%d : %d", left.score, right.score)
-		w, _ := window.GetScaledTextSize(score, scoreScale)
-		window.DrawScaledText(score, (windowW-w)/2, 10, scoreScale, draw.Black)
+		scoreTextW, scoreTextH := window.GetScaledTextSize(score, scoreScale)
+		window.DrawScaledText(score, (windowW-scoreTextW)/2, 10, scoreScale, draw.Black)
+		if leftWon || rightWon {
+			winSoundTimer--
+			if winSoundTimer == 1 {
+				if leftWon {
+					window.PlaySoundFile(leftWinSoundPath)
+				}
+				if rightWon {
+					window.PlaySoundFile(rightWinSoundPath)
+				}
+			}
+			if leftWon || rightWon {
+				winner := leftKiwiPath
+				if rightWon {
+					winner = rightKiwiPath
+				}
+				window.DrawImageFile(winner, (windowW-kiwiW)/2, scoreTextH+(windowH-scoreTextH-kiwiH)/2)
+			}
+		} else {
+			// draw left kiwi
+			leftPath := leftKiwiPath
+			if left.shootFrames > 0 {
+				leftPath = leftKiwiShootPath
+			}
+			window.DrawImageFile(leftPath, left.x, windowH-kiwiH)
+			// draw ball
+			window.DrawImageFile(ballPath, ballX, windowH-ballH)
+			// draw right kiwi
+			rightPath := rightKiwiPath
+			if right.shootFrames > 0 {
+				rightPath = rightKiwiShootPath
+			}
+			window.DrawImageFile(rightPath, right.x, windowH-kiwiH)
+		}
 	}))
 	closeDInput()
 }
