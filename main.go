@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	windowW, windowH   = 1890, 500
+	windowH            = 500
 	kiwiW, kiwiH       = 343, 300
 	ballW, ballH       = 60, 60
 	leftKiwiPath       = "rsc/blue.png"
@@ -57,6 +57,9 @@ var (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	dinputInited := false
+	r := w32.GetWindowRect(w32.GetDesktopWindow())
+	windowW := int(r.Right - r.Left - 30)
+
 	var left, right player
 	ballX := (windowW - ballW) / 2
 	ballVx := 0
@@ -65,7 +68,7 @@ func main() {
 	var leftWon, rightWon bool
 	winSoundTimer := 0
 	musicTimer := 0
-	check(draw.RunWindow("Jolina Kiwi Fußball", windowW, windowH, func(window draw.Window) {
+	check(draw.RunWindow("Jolina's Kiwi Fußball", windowW, windowH, func(window draw.Window) {
 		if !dinputInited {
 			initDInput()
 			dinputInited = true
@@ -246,7 +249,7 @@ func main() {
 					ballVx = 0
 				}
 			}
-			leftGoal := ballX+ballHitBoxX[0] > windowW
+			leftGoal := ballX+ballHitBoxX[0] >= windowW
 			rightGoal := ballX+ballHitBoxX[1] < 0
 			if leftGoal || rightGoal {
 				if leftGoal {
