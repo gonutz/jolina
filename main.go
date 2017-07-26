@@ -11,29 +11,40 @@ import (
 )
 
 const (
-	windowW, windowH    = 1800, 500
-	kiwiW, kiwiH        = 343, 300
-	ballW, ballH        = 60, 60
-	leftKiwiPath        = "rsc/blue.png"
-	leftKiwiShootPath   = "rsc/blue_shoot.png"
-	rightKiwiPath       = "rsc/white.png"
-	rightKiwiShootPath  = "rsc/white_shoot.png"
-	ballPath            = "rsc/ball.png"
-	kiwiSpeed           = 15
-	shootFrames         = 6
-	shootCooldown       = shootFrames + 8
-	minBallShootSpeed   = 30
-	maxBallShootSpeed   = 50
-	ballFriction        = 3
-	leftShootSoundPath  = "rsc/blue_shoot.wav"
-	rightShootSoundPath = "rsc/white_shoot.wav"
-	ballShootSoundPath  = "rsc/ball_shoot.wav"
+	windowW, windowH   = 1800, 500
+	kiwiW, kiwiH       = 343, 300
+	ballW, ballH       = 60, 60
+	leftKiwiPath       = "rsc/blue.png"
+	leftKiwiShootPath  = "rsc/blue_shoot.png"
+	rightKiwiPath      = "rsc/white.png"
+	rightKiwiShootPath = "rsc/white_shoot.png"
+	ballPath           = "rsc/ball.png"
+	kiwiSpeed          = 15
+	shootFrames        = 6
+	shootCooldown      = shootFrames + 8
+	minBallShootSpeed  = 30
+	maxBallShootSpeed  = 50
+	ballFriction       = 3
 )
 
 var (
-	leftKiwiShootX  = [2]int{90, 140}
-	rightKiwiShootX = [2]int{160, 220}
-	ballHitBoxX     = [2]int{5, 50}
+	leftKiwiShootX      = [2]int{90, 140}
+	rightKiwiShootX     = [2]int{160, 220}
+	ballHitBoxX         = [2]int{5, 50}
+	leftShootSoundPaths = []string{
+		"rsc/blue_shoot1.wav",
+		"rsc/blue_shoot2.wav",
+		"rsc/blue_shoot3.wav",
+	}
+	rightShootSoundPaths = []string{
+		"rsc/white_shoot1.wav",
+		"rsc/white_shoot2.wav",
+		"rsc/white_shoot3.wav",
+	}
+	ballShootSoundPaths = []string{
+		"rsc/ball_shoot1.wav",
+		"rsc/ball_shoot2.wav",
+	}
 )
 
 func main() {
@@ -137,28 +148,28 @@ func main() {
 				// start shooting
 				left.shootFrames = shootFrames
 				left.shootCooldown = shootCooldown
-				window.PlaySoundFile(leftShootSoundPath)
+				window.PlaySoundFile(leftShootSoundPaths[rand.Intn(len(leftShootSoundPaths))])
 				// check ball collision
 				shootLeft := left.x + leftKiwiShootX[0]
 				shootRight := left.x + leftKiwiShootX[1]
 				d := abs((ballLeft+ballRight)/2 - (shootLeft+shootRight)/2)
 				if d < (ballRight-ballLeft)/2+(shootRight-shootLeft)/2 {
 					ballVx += minBallShootSpeed + rand.Intn(maxBallShootSpeed-minBallShootSpeed)
-					window.PlaySoundFile(ballShootSoundPath)
+					window.PlaySoundFile(ballShootSoundPaths[rand.Intn(len(ballShootSoundPaths))])
 				}
 			}
 			if rightShootDown && right.shootCooldown == 0 {
 				// start shooting
 				right.shootFrames = shootFrames
 				right.shootCooldown = shootCooldown
-				window.PlaySoundFile(rightShootSoundPath)
+				window.PlaySoundFile(rightShootSoundPaths[rand.Intn(len(rightShootSoundPaths))])
 				// check ball collision
 				shootLeft := right.x + rightKiwiShootX[0]
 				shootRight := right.x + rightKiwiShootX[1]
 				d := abs((ballLeft+ballRight)/2 - (shootLeft+shootRight)/2)
 				if d < (ballRight-ballLeft)/2+(shootRight-shootLeft)/2 {
 					ballVx -= minBallShootSpeed + rand.Intn(maxBallShootSpeed-minBallShootSpeed)
-					window.PlaySoundFile(ballShootSoundPath)
+					window.PlaySoundFile(ballShootSoundPaths[rand.Intn(len(ballShootSoundPaths))])
 				}
 			}
 			// move left player
