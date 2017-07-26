@@ -29,8 +29,9 @@ const (
 	rightGoalSoundPath = "rsc/blue_goal.wav"
 	leftWinSoundPath   = "rsc/blue_win.wav"
 	rightWinSoundPath  = "rsc/white_win.wav"
-	winScore           = 1 //0
+	winScore           = 10
 	winSoundCooldown   = 40
+	backMusicPath      = "rsc/fuss_song.wav"
 )
 
 var (
@@ -63,6 +64,7 @@ func main() {
 	scoringTimer := 0
 	var leftWon, rightWon bool
 	winSoundTimer := 0
+	musicTimer := 0
 	check(draw.RunWindow("Jolina Kiwi Fußball", windowW, windowH, func(window draw.Window) {
 		if !dinputInited {
 			initDInput()
@@ -72,6 +74,12 @@ func main() {
 		if window.WasKeyPressed(draw.KeyEscape) {
 			window.Close()
 		}
+
+		if musicTimer == 0 {
+			window.PlaySoundFile(backMusicPath)
+			musicTimer = 200
+		}
+		musicTimer--
 
 		if scoringTimer > 0 {
 			scoringTimer--
