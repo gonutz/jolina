@@ -90,7 +90,7 @@ func main() {
 		restartBlinking = false
 	}
 
-	check(draw.RunWindow("Jolina's Kiwi Fußball", windowW, windowH, func(window draw.Window) {
+	check(draw.RunWindow("Jolinas Kiwi Fußball", windowW, windowH, func(window draw.Window) {
 		if !dinputInited {
 			setWindowIcon()
 			initDInput()
