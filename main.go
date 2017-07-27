@@ -36,8 +36,8 @@ const (
 )
 
 var (
-	leftKiwiShootX      = [2]int{90, 143}
-	rightKiwiShootX     = [2]int{160, 220}
+	leftKiwiShootX      = [2]int{86, 143}
+	rightKiwiShootX     = [2]int{160, 218}
 	ballHitBoxX         = [2]int{5, 50}
 	leftShootSoundPaths = []string{
 		"rsc/blue_shoot1.wav",
@@ -349,9 +349,9 @@ func main() {
 			if left.shootFrames > 0 {
 				leftPath = leftKiwiShootPath
 			}
-			window.DrawImageFile(leftPath, left.x, windowH-kiwiH)
+			window.DrawImageFile(leftPath, left.x, windowH-kiwiH-20)
 			// draw ball
-			window.DrawImageFile(ballPath, ballX, windowH-ballH)
+			window.DrawImageFile(ballPath, ballX, windowH-ballH-10)
 			// draw right kiwi
 			rightPath := rightKiwiPath
 			if right.shootFrames > 0 {
