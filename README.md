@@ -11,11 +11,15 @@ The game runs on Windows only.
 # Controls
 
 Blue kiwi:
+
 `A` `D`: move left/right
+
 `W`: kick the ball
 
 White kiwi:
+
 `LEFT` `RIGHT`: move left/right
+
 `UP`: kick the ball
 
 There is also controller support, if you plug in one or two game controllers before running the game, they will be recognized automatically. Use the standard left/right axis for movement and press any key on the pad to kick the ball.
