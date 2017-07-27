@@ -38,7 +38,7 @@ const (
 var (
 	leftKiwiShootX      = [2]int{86, 143}
 	rightKiwiShootX     = [2]int{160, 218}
-	ballHitBoxX         = [2]int{5, 50}
+	ballHitBoxX         = [2]int{7, 52}
 	leftShootSoundPaths = []string{
 		"rsc/blue_shoot1.wav",
 		"rsc/blue_shoot2.wav",
@@ -63,6 +63,7 @@ func main() {
 
 	var left, right player
 	ballX := (windowW - ballW) / 2
+	ballRotation := 0
 	ballVx := 0
 	right.x = windowW - kiwiW
 	scoringTimer := 0
@@ -88,6 +89,7 @@ func main() {
 		winShowRestartTimer = 0
 		winRestartBlinkTimer = 0
 		restartBlinking = false
+		ballRotation = 0
 	}
 
 	check(draw.RunWindow("Jolinas Kiwi Fußball", windowW, windowH, func(window draw.Window) {
@@ -167,6 +169,7 @@ func main() {
 				right.x = windowW - kiwiW
 				ballX = (windowW - ballW) / 2
 				ballVx = 0
+				ballRotation = 0
 				if left.score >= winScore {
 					leftWon = true
 				}
@@ -272,6 +275,7 @@ func main() {
 			}
 			// move ball
 			ballX += ballVx
+			ballRotation += ballVx
 			if ballVx > 0 {
 				ballVx -= ballFriction
 				if ballVx < 0 {
@@ -351,7 +355,7 @@ func main() {
 			}
 			window.DrawImageFile(leftPath, left.x, windowH-kiwiH-20)
 			// draw ball
-			window.DrawImageFile(ballPath, ballX, windowH-ballH-10)
+			window.DrawImageFileRotated(ballPath, ballX, windowH-ballH-10, ballRotation)
 			// draw right kiwi
 			rightPath := rightKiwiPath
 			if right.shootFrames > 0 {
