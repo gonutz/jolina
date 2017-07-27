@@ -32,6 +32,7 @@ const (
 	winScore           = 10
 	winSoundCooldown   = 40
 	backMusicPath      = "rsc/fuss_song.wav"
+	blinkCooldown      = 30
 )
 
 var (
@@ -68,6 +69,27 @@ func main() {
 	var leftWon, rightWon bool
 	winSoundTimer := 0
 	musicTimer := 0
+	winShowRestartTimer := 0
+	winRestartBlinkTimer := 0
+	restartBlinking := false
+
+	restart := func() {
+		left.score = 0
+		left.shootCooldown = 0
+		left.shootFrames = 0
+		left.x = 0
+		right.score = 0
+		right.shootCooldown = 0
+		right.shootFrames = 0
+		right.x = windowW - kiwiW
+		scoringTimer = 0
+		leftWon, rightWon = false, false
+		winSoundTimer = 0
+		winShowRestartTimer = 0
+		winRestartBlinkTimer = 0
+		restartBlinking = false
+	}
+
 	check(draw.RunWindow("Jolina's Kiwi Fußball", windowW, windowH, func(window draw.Window) {
 		if !dinputInited {
 			setWindowIcon()
@@ -85,6 +107,54 @@ func main() {
 		}
 		musicTimer--
 
+		// query the controls from keyboard and gamepad
+		checkDevice := func(dev *di8.Device) (shoot, left, right bool) {
+			var state di8.JOYSTATE
+			if err := dev.GetDeviceState(&state); err == nil {
+				pos := axisPos(uint32(state.X))
+				if pos < -0.9 {
+					left = true
+				}
+				if pos > 0.9 {
+					right = true
+				}
+				n, err := dev.GetDeviceData(devBuf[:], 0)
+				if err == nil {
+					for i := range devBuf[:n] {
+						if di8.JOFS_BUTTON0 <= devBuf[i].Ofs && devBuf[i].Ofs <= di8.JOFS_BUTTON31 &&
+							devBuf[i].Data&0xFF != 0 {
+							shoot = true
+						}
+					}
+				} else if err != nil &&
+					(err.Code() == di8.ERR_INPUTLOST || err.Code() == di8.ERR_NOTACQUIRED) {
+					dev.Acquire()
+				}
+			} else if err != nil &&
+				(err.Code() == di8.ERR_INPUTLOST || err.Code() == di8.ERR_NOTACQUIRED) {
+				dev.Acquire()
+			}
+			return
+		}
+		leftShootDown := window.WasKeyPressed(draw.KeyW)
+		leftLeftDown := window.IsKeyDown(draw.KeyA)
+		leftRightDown := window.IsKeyDown(draw.KeyD)
+		if len(devices) > 0 {
+			shoot, left, right := checkDevice(devices[0])
+			leftShootDown = leftShootDown || shoot
+			leftLeftDown = leftLeftDown || left
+			leftRightDown = leftRightDown || right
+		}
+		rightShootDown := window.WasKeyPressed(draw.KeyUp)
+		rightLeftDown := window.IsKeyDown(draw.KeyLeft)
+		rightRightDown := window.IsKeyDown(draw.KeyRight)
+		if len(devices) > 1 {
+			shoot, left, right := checkDevice(devices[1])
+			rightShootDown = rightShootDown || shoot
+			rightLeftDown = rightLeftDown || left
+			rightRightDown = rightRightDown || right
+		}
+
 		if scoringTimer > 0 {
 			scoringTimer--
 			if scoringTimer == 0 {
@@ -99,15 +169,25 @@ func main() {
 				ballVx = 0
 				if left.score >= winScore {
 					leftWon = true
-					winSoundTimer = winSoundCooldown
 				}
 				if right.score >= winScore {
 					rightWon = true
+				}
+				if leftWon || rightWon {
 					winSoundTimer = winSoundCooldown
+					winShowRestartTimer = winSoundCooldown + 90
 				}
 			}
 		} else if leftWon || rightWon {
-			// do nothing here, the rendering changes in this case
+			if winShowRestartTimer == 0 {
+				// if the restart instruction is showing and either player kicks
+				// restart the game
+				if window.WasKeyPressed(draw.KeyEnter) ||
+					window.WasKeyPressed(draw.KeySpace) ||
+					leftShootDown || rightShootDown {
+					restart()
+				}
+			}
 		} else {
 			// shoot
 			left.shootFrames--
@@ -128,53 +208,6 @@ func main() {
 			}
 			ballLeft := ballX + ballHitBoxX[0]
 			ballRight := ballX + ballHitBoxX[1]
-			checkDevice := func(dev *di8.Device) (shoot, left, right bool) {
-				var state di8.JOYSTATE
-				if err := dev.GetDeviceState(&state); err == nil {
-					pos := axisPos(uint32(state.X))
-					if pos < -0.9 {
-						left = true
-					}
-					if pos > 0.9 {
-						right = true
-					}
-					n, err := dev.GetDeviceData(devBuf[:], 0)
-					if err == nil {
-						for i := range devBuf[:n] {
-							if di8.JOFS_BUTTON0 <= devBuf[i].Ofs && devBuf[i].Ofs <= di8.JOFS_BUTTON31 &&
-								devBuf[i].Data&0xFF != 0 {
-								shoot = true
-							}
-						}
-					} else if err != nil &&
-						(err.Code() == di8.ERR_INPUTLOST || err.Code() == di8.ERR_NOTACQUIRED) {
-						dev.Acquire()
-					}
-				} else if err != nil &&
-					(err.Code() == di8.ERR_INPUTLOST || err.Code() == di8.ERR_NOTACQUIRED) {
-					dev.Acquire()
-				}
-				return
-			}
-			leftShootDown := window.WasKeyPressed(draw.KeyW)
-			leftLeftDown := window.IsKeyDown(draw.KeyA)
-			leftRightDown := window.IsKeyDown(draw.KeyD)
-			// see the controller input
-			if len(devices) > 0 {
-				shoot, left, right := checkDevice(devices[0])
-				leftShootDown = leftShootDown || shoot
-				leftLeftDown = leftLeftDown || left
-				leftRightDown = leftRightDown || right
-			}
-			rightShootDown := window.WasKeyPressed(draw.KeyUp)
-			rightLeftDown := window.IsKeyDown(draw.KeyLeft)
-			rightRightDown := window.IsKeyDown(draw.KeyRight)
-			if len(devices) > 1 {
-				shoot, left, right := checkDevice(devices[1])
-				rightShootDown = rightShootDown || shoot
-				rightLeftDown = rightLeftDown || left
-				rightRightDown = rightRightDown || right
-			}
 			if leftShootDown && left.shootCooldown == 0 {
 				// start shooting
 				left.shootFrames = shootFrames
@@ -272,6 +305,9 @@ func main() {
 		window.DrawScaledText(score, (windowW-scoreTextW)/2, 10, scoreScale, draw.Black)
 		if leftWon || rightWon {
 			winSoundTimer--
+			if winSoundTimer < 0 {
+				winSoundTimer = 0
+			}
 			if winSoundTimer == 1 {
 				if leftWon {
 					window.PlaySoundFile(leftWinSoundPath)
@@ -286,6 +322,26 @@ func main() {
 					winner = rightKiwiPath
 				}
 				window.DrawImageFile(winner, (windowW-kiwiW)/2, scoreTextH+(windowH-scoreTextH-kiwiH)/2)
+			}
+			winShowRestartTimer--
+			if winShowRestartTimer < 0 {
+				winShowRestartTimer = 0
+			}
+			if winShowRestartTimer == 0 {
+				winRestartBlinkTimer--
+				if winRestartBlinkTimer < 0 {
+					winRestartBlinkTimer = blinkCooldown
+					restartBlinking = !restartBlinking
+				}
+				if restartBlinking {
+					window.DrawScaledText(
+						"Zum Neustart kicken/Enter/Leertaste",
+						10,
+						windowH-scoreTextH,
+						2,
+						draw.Black,
+					)
+				}
 			}
 		} else {
 			// draw left kiwi
