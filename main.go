@@ -105,7 +105,7 @@ func main() {
 
 		if musicTimer == 0 {
 			window.PlaySoundFile(backMusicPath)
-			musicTimer = 200
+			musicTimer = 241
 		}
 		musicTimer--
 
