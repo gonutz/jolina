@@ -1,7 +1,9 @@
 package main
 
 import (
+	"embed"
 	"fmt"
+	"io"
 	"math/rand"
 	"time"
 
@@ -9,6 +11,9 @@ import (
 	"github.com/gonutz/prototype/draw"
 	"github.com/gonutz/w32"
 )
+
+//go:embed rsc/*
+var rsc embed.FS
 
 const (
 	windowH            = 500
@@ -56,6 +61,10 @@ var (
 )
 
 func main() {
+	draw.OpenFile = func(path string) (io.ReadCloser, error) {
+		return rsc.Open(path)
+	}
+
 	rand.Seed(time.Now().UnixNano())
 	dinputInited := false
 	r := w32.GetWindowRect(w32.GetDesktopWindow())
